@@ -13,13 +13,18 @@ loadEnvFile(path.resolve(repoRoot, ".env.local"), { override: true });
 loadEnvFile(path.resolve(appDir, ".env"));
 loadEnvFile(path.resolve(appDir, ".env.local"), { override: true });
 
+const apiDefaults = {
+  host: "0.0.0.0",
+  port: 3001,
+  logLevel: "info" as const,
+  sessionTtlHours: 24,
+  storePath: path.resolve(process.cwd(), ".launchpad/store.json"),
+  oauthScopes: ["droplet:create", "droplet:read", "regions:read", "sizes:read", "actions:read", "image:read"],
+};
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  HOST: z.string().default("0.0.0.0"),
-  PORT: z.coerce.number().int().positive().default(3001),
-  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   COOKIE_SECRET: z.string().min(16).default("launchpad-development-cookie-secret"),
-  SESSION_TTL_HOURS: z.coerce.number().int().positive().default(24),
   DATABASE_URL: z.string().optional(),
   DIGITALOCEAN_CLIENT_ID: z.string().default("digitalocean-client-id"),
   DIGITALOCEAN_CLIENT_SECRET: z.string().default("digitalocean-client-secret"),
@@ -29,12 +34,6 @@ const envSchema = z.object({
     .default("http://localhost:3001/api/v1/auth/digitalocean/callback"),
   LAUNCHPAD_PUBLIC_API_URL: z.string().url().default("http://localhost:3001"),
   LAUNCHPAD_WEB_URL: z.string().url().default("http://localhost:3000"),
-  LAUNCHPAD_STORE_PATH: z
-    .string()
-    .default(path.resolve(process.cwd(), ".launchpad/store.json")),
-  DIGITALOCEAN_OAUTH_SCOPES: z
-    .string()
-    .default("droplet:create droplet:read regions:read sizes:read actions:read image:read"),
 });
 
 export type ApiConfig = ReturnType<typeof loadApiConfig>;
@@ -44,19 +43,19 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env) {
 
   return {
     nodeEnv: parsed.NODE_ENV,
-    host: parsed.HOST,
-    port: parsed.PORT,
-    logLevel: parsed.NODE_ENV === "test" ? "silent" : parsed.LOG_LEVEL,
+    host: apiDefaults.host,
+    port: apiDefaults.port,
+    logLevel: parsed.NODE_ENV === "test" ? "silent" : apiDefaults.logLevel,
     cookieSecret: parsed.COOKIE_SECRET,
     cookieSecure: parsed.NODE_ENV === "production",
-    sessionTtlHours: parsed.SESSION_TTL_HOURS,
+    sessionTtlHours: apiDefaults.sessionTtlHours,
     databaseUrl: parsed.DATABASE_URL,
     digitalOceanClientId: parsed.DIGITALOCEAN_CLIENT_ID,
     digitalOceanClientSecret: parsed.DIGITALOCEAN_CLIENT_SECRET,
     digitalOceanRedirectUri: parsed.DIGITALOCEAN_REDIRECT_URI,
     publicApiUrl: parsed.LAUNCHPAD_PUBLIC_API_URL,
     webUrl: parsed.LAUNCHPAD_WEB_URL,
-    storePath: parsed.LAUNCHPAD_STORE_PATH,
-    oauthScopes: parsed.DIGITALOCEAN_OAUTH_SCOPES.split(/\s+/u).filter(Boolean),
+    storePath: apiDefaults.storePath,
+    oauthScopes: apiDefaults.oauthScopes,
   };
 }

@@ -33,11 +33,16 @@ npm install
 cp .env.example .env
 ```
 
+Edit `.env` and fill only:
+`COOKIE_SECRET`, `DATABASE_URL`, `DIGITALOCEAN_CLIENT_ID`, `DIGITALOCEAN_CLIENT_SECRET`
+
 3. Configure the web app:
 
 ```bash
 cp apps/web/.env.example apps/web/.env.local
 ```
+
+`apps/web/.env.local` is optional for local dev because the UI already defaults to `http://localhost:3001`.
 
 4. Start PostgreSQL locally or via Docker:
 
@@ -61,6 +66,8 @@ npm run dev:worker
 
 7. For a real DigitalOcean demo from your laptop, `LAUNCHPAD_PUBLIC_API_URL` in [`.env.example`](/home/dev/claw-launchpad/.env.example) must be a public HTTPS URL that forwards to your local API.
    If it stays `http://localhost:3001`, the Droplet will not be able to send bootstrap callbacks back to Launchpad.
+   Optional overrides when you are not on localhost:
+   `DIGITALOCEAN_REDIRECT_URI`, `LAUNCHPAD_PUBLIC_API_URL`, `LAUNCHPAD_WEB_URL`, `NEXT_PUBLIC_LAUNCHPAD_API_URL`
 
 ## Docker compose
 
@@ -70,7 +77,8 @@ npm run dev:worker
 cp .env.docker.example .env
 ```
 
-2. Fill in `COOKIE_SECRET`, `DIGITALOCEAN_CLIENT_ID`, and `DIGITALOCEAN_CLIENT_SECRET`.
+2. Fill in:
+   `COOKIE_SECRET`, `DATABASE_URL`, `DIGITALOCEAN_CLIENT_ID`, `DIGITALOCEAN_CLIENT_SECRET`
 
 3. Start the full stack:
 
@@ -95,4 +103,5 @@ npm test
 - Persistence: PostgreSQL via Prisma when `DATABASE_URL` is set
 - API session TTL: `24h`, capped by the DigitalOcean OAuth token expiry
 - API logs: request IDs + redaction for OAuth/session/app secrets
+- Host, port, OAuth scopes, worker poll interval and local store paths are fixed in `config.ts`
 - Worker scheduling: `pg-boss` when `DATABASE_URL` is set, interval fallback otherwise

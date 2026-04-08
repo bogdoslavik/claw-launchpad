@@ -37,18 +37,13 @@ services:
         condition: service_completed_successfully
     environment:
       NODE_ENV: production
-      HOST: 0.0.0.0
-      PORT: 3001
       DATABASE_URL: ${DATABASE_URL}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
       COOKIE_SECRET: ${COOKIE_SECRET}
-      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-24}
       DIGITALOCEAN_CLIENT_ID: ${DIGITALOCEAN_CLIENT_ID}
       DIGITALOCEAN_CLIENT_SECRET: ${DIGITALOCEAN_CLIENT_SECRET}
       DIGITALOCEAN_REDIRECT_URI: ${DIGITALOCEAN_REDIRECT_URI:-http://localhost:3001/api/v1/auth/digitalocean/callback}
       LAUNCHPAD_PUBLIC_API_URL: ${LAUNCHPAD_PUBLIC_API_URL:-http://localhost:3001}
       LAUNCHPAD_WEB_URL: ${LAUNCHPAD_WEB_URL:-http://localhost:3000}
-      DIGITALOCEAN_OAUTH_SCOPES: ${DIGITALOCEAN_OAUTH_SCOPES:-droplet:create droplet:read regions:read sizes:read actions:read image:read}
     ports:
       - "3001:3001"
 
@@ -64,8 +59,6 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: ${DATABASE_URL}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-10000}
 
   web:
     build:
