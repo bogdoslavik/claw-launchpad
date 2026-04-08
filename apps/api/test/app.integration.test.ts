@@ -34,6 +34,7 @@ describe("api integration", () => {
         port: 3001,
         cookieSecret: "test-cookie-secret-test-cookie-secret",
         cookieSecure: false,
+        databaseUrl: undefined,
         digitalOceanClientId: "test-client-id",
         digitalOceanClientSecret: "test-client-secret",
         digitalOceanRedirectUri: "http://localhost:3001/api/v1/auth/digitalocean/callback",
@@ -139,4 +140,3 @@ describe("api integration", () => {
     expect(oauthClient.revokedTokens).toEqual(["access-token"]);
   });
 });
-

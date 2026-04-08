@@ -1,0 +1,82 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-claw_launchpad}
+      POSTGRES_USER: ${POSTGRES_USER:-launchpad}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-launchpad}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-launchpad} -d ${POSTGRES_DB:-claw_launchpad}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ["npm", "run", "db:migrate:deploy"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3001
+      DATABASE_URL: ${DATABASE_URL}
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      DIGITALOCEAN_CLIENT_ID: ${DIGITALOCEAN_CLIENT_ID}
+      DIGITALOCEAN_CLIENT_SECRET: ${DIGITALOCEAN_CLIENT_SECRET}
+      DIGITALOCEAN_REDIRECT_URI: ${DIGITALOCEAN_REDIRECT_URI:-http://localhost:3001/api/v1/auth/digitalocean/callback}
+      LAUNCHPAD_PUBLIC_API_URL: ${LAUNCHPAD_PUBLIC_API_URL:-http://localhost:3001}
+      LAUNCHPAD_WEB_URL: ${LAUNCHPAD_WEB_URL:-http://localhost:3000}
+      DIGITALOCEAN_OAUTH_SCOPES: ${DIGITALOCEAN_OAUTH_SCOPES:-droplet:create droplet:read regions:read sizes:read actions:read image:read}
+    ports:
+      - "3001:3001"
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-10000}
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_LAUNCHPAD_API_URL: ${NEXT_PUBLIC_LAUNCHPAD_API_URL:-http://localhost:3001}
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres-data:
+

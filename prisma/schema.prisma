@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DeploymentStatus {
+  requested
+  droplet_creating
+  droplet_active
+  bootstrapping
+  running
+  failed
+  canceled
+}
+
+enum DeploymentEventType {
+  oauth_connected
+  droplet_create_requested
+  droplet_action_completed
+  cloud_init_started
+  docker_installed
+  openclaw_started
+  failed
+  canceled
+}
+
+model User {
+  id          String       @id
+  createdAt   DateTime
+  updatedAt   DateTime
+  doUserUuid  String
+  doTeamUuid  String
+  email       String?
+  deployments Deployment[]
+  apiSessions ApiSession[]
+
+  @@unique([doUserUuid, doTeamUuid])
+}
+
+model Deployment {
+  id               String               @id
+  userId           String
+  status           DeploymentStatus
+  idempotencyKey   String
+  dropletId        Int?
+  dropletName      String
+  actionId         Int?
+  region           String
+  sizeSlug         String
+  imageSlug        String
+  publicIpv4       String?
+  openclawImage    String
+  openclawModel    String
+  createdAt        DateTime
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  updatedAt        DateTime
+  lastErrorCode    String?
+  lastErrorMessage String?
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  callback         DeploymentCallback?
+  credential       DeploymentCredential?
+  events           DeploymentEvent[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([status])
+  @@index([userId, createdAt])
+}
+
+model DeploymentCallback {
+  deploymentId       String     @id
+  bootstrapTokenHash String
+  expiresAt          DateTime
+  createdAt          DateTime
+  updatedAt          DateTime
+  deployment         Deployment @relation(fields: [deploymentId], references: [id], onDelete: Cascade)
+}
+
+model DeploymentCredential {
+  deploymentId String     @id
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime
+  createdAt    DateTime
+  updatedAt    DateTime
+  deployment   Deployment @relation(fields: [deploymentId], references: [id], onDelete: Cascade)
+}
+
+model DeploymentEvent {
+  id           String              @id
+  deploymentId String
+  ts           DateTime
+  type         DeploymentEventType
+  payload      Json?
+  deployment   Deployment          @relation(fields: [deploymentId], references: [id], onDelete: Cascade)
+
+  @@index([deploymentId, ts])
+}
+
+model ApiSession {
+  id                   String   @id
+  userId               String
+  accessToken          String
+  refreshToken         String?
+  accessTokenExpiresAt DateTime
+  createdAt            DateTime
+  updatedAt            DateTime
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
+}

@@ -5,5 +5,6 @@ export * from "./defaults.js";
 export * from "./deployment-service.js";
 export * from "./deployment-tracker.js";
 export * from "./errors.js";
+export * from "./prisma-store.js";
 export * from "./store.js";
 export * from "./types.js";

@@ -7,6 +7,7 @@ const envSchema = z.object({
   HOST: z.string().default("0.0.0.0"),
   PORT: z.coerce.number().int().positive().default(3001),
   COOKIE_SECRET: z.string().min(16).default("launchpad-development-cookie-secret"),
+  DATABASE_URL: z.string().optional(),
   DIGITALOCEAN_CLIENT_ID: z.string().default("digitalocean-client-id"),
   DIGITALOCEAN_CLIENT_SECRET: z.string().default("digitalocean-client-secret"),
   DIGITALOCEAN_REDIRECT_URI: z
@@ -34,6 +35,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env) {
     port: parsed.PORT,
     cookieSecret: parsed.COOKIE_SECRET,
     cookieSecure: parsed.NODE_ENV === "production",
+    databaseUrl: parsed.DATABASE_URL,
     digitalOceanClientId: parsed.DIGITALOCEAN_CLIENT_ID,
     digitalOceanClientSecret: parsed.DIGITALOCEAN_CLIENT_SECRET,
     digitalOceanRedirectUri: parsed.DIGITALOCEAN_REDIRECT_URI,
@@ -43,4 +45,3 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env) {
     oauthScopes: parsed.DIGITALOCEAN_OAUTH_SCOPES.split(/\s+/u).filter(Boolean),
   };
 }
-

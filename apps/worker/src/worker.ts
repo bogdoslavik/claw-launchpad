@@ -21,6 +21,10 @@ export class LaunchpadWorker {
   }
 
   start() {
+    if (this.timer) {
+      return;
+    }
+
     this.timer = setInterval(() => {
       void this.runOnce();
     }, this.pollIntervalMs);
