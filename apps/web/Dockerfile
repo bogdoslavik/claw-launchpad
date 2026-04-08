@@ -10,10 +10,9 @@ COPY tsconfig.base.json vitest.config.ts ./
 COPY apps ./apps
 COPY packages ./packages
 
-RUN npm ci
+RUN npm ci --include=dev
 RUN npm run build --workspace @launchpad/web
 
 EXPOSE 3000
 
 CMD ["npm", "run", "start", "--workspace", "@launchpad/web"]
-

@@ -27,28 +27,28 @@ Minimal Launchpad for provisioning OpenClaw on a user's DigitalOcean account.
 npm install
 ```
 
-2. Start PostgreSQL locally or via Docker:
+2. Create the shared backend env file:
+
+```bash
+cp .env.example .env
+```
+
+3. Configure the web app:
+
+```bash
+cp apps/web/.env.example apps/web/.env.local
+```
+
+4. Start PostgreSQL locally or via Docker:
 
 ```bash
 npm run db:up
 ```
 
-3. Apply database migrations:
+5. Apply database migrations:
 
 ```bash
 npm run db:migrate:deploy
-```
-
-4. Configure the API:
-
-```bash
-cp apps/api/.env.example apps/api/.env
-```
-
-5. Configure the web app:
-
-```bash
-cp apps/web/.env.example apps/web/.env.local
 ```
 
 6. Start the services in separate shells:
@@ -58,6 +58,9 @@ npm run dev:api
 npm run dev:web
 npm run dev:worker
 ```
+
+7. For a real DigitalOcean demo from your laptop, `LAUNCHPAD_PUBLIC_API_URL` in [`.env.example`](/home/dev/claw-launchpad/.env.example) must be a public HTTPS URL that forwards to your local API.
+   If it stays `http://localhost:3001`, the Droplet will not be able to send bootstrap callbacks back to Launchpad.
 
 ## Docker compose
 

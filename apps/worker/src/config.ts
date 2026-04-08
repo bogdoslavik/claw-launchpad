@@ -1,6 +1,20 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
+import { loadEnvFile } from "@launchpad/core";
 import { z } from "zod";
+
+const configDir = path.dirname(fileURLToPath(import.meta.url));
+const appDir = path.resolve(configDir, "..");
+const repoRoot = path.resolve(appDir, "../..");
+const apiDir = path.resolve(repoRoot, "apps/api");
+
+loadEnvFile(path.resolve(repoRoot, ".env"));
+loadEnvFile(path.resolve(repoRoot, ".env.local"), { override: true });
+loadEnvFile(path.resolve(apiDir, ".env"));
+loadEnvFile(path.resolve(apiDir, ".env.local"), { override: true });
+loadEnvFile(path.resolve(appDir, ".env"));
+loadEnvFile(path.resolve(appDir, ".env.local"), { override: true });
 
 const envSchema = z.object({
   DATABASE_URL: z.string().optional(),

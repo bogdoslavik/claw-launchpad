@@ -10,7 +10,6 @@ COPY tsconfig.base.json vitest.config.ts ./
 COPY apps ./apps
 COPY packages ./packages
 
-RUN npm ci
+RUN npm ci --include=dev
 
 CMD ["npm", "run", "start", "--workspace", "@launchpad/worker"]
-
