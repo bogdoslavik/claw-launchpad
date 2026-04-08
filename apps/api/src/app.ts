@@ -5,10 +5,8 @@ import { z } from "zod";
 import {
   ConflictError,
   DeploymentService,
-  JsonLaunchpadStore,
   LaunchpadError,
   NotFoundError,
-  SystemClock,
   UnauthorizedError,
 } from "@launchpad/core";
 import type {
@@ -20,10 +18,12 @@ import type {
 } from "@launchpad/core";
 
 import type { ApiConfig } from "./config.js";
-import { MemorySessionStore, type ApiSession, type SessionStore } from "./session-store.js";
+import { buildFastifyLoggerOptions } from "./logging.js";
+import type { ApiSession, SessionStore } from "./session-store.js";
 
 const SESSION_COOKIE = "lp_session";
 const OAUTH_STATE_COOKIE = "lp_oauth_state";
+const OAUTH_STATE_MAX_AGE_SECONDS = 10 * 60;
 
 const deploymentBodySchema = z.object({
   telegramBotToken: z.string().min(1),
@@ -55,26 +55,39 @@ export interface ApiDependencies {
   store: LaunchpadStore;
 }
 
-function buildSession(clock: Clock, userId: string, tokenSet: ApiSession): ApiSession {
-  const nowIso = clock.now().toISOString();
+interface SessionSeed {
+  accessToken: string;
+  refreshToken?: string;
+  accessTokenExpiresAt: string;
+  sessionTtlHours: number;
+}
+
+function buildSession(clock: Clock, userId: string, tokenSet: SessionSeed): ApiSession {
+  const now = clock.now();
+  const nowIso = now.toISOString();
+  const sessionExpiryMs = now.getTime() + tokenSet.sessionTtlHours * 60 * 60 * 1000;
+  const accessTokenExpiryMs = new Date(tokenSet.accessTokenExpiresAt).getTime();
+
   return {
     id: crypto.randomUUID(),
     userId,
     accessToken: tokenSet.accessToken,
     refreshToken: tokenSet.refreshToken,
     accessTokenExpiresAt: tokenSet.accessTokenExpiresAt,
+    expiresAt: new Date(Math.min(sessionExpiryMs, accessTokenExpiryMs)).toISOString(),
     createdAt: nowIso,
     updatedAt: nowIso,
   };
 }
 
-function sessionCookieOptions(config: ApiConfig) {
+function cookieOptions(config: ApiConfig, maxAgeSeconds?: number) {
   return {
     path: "/",
     httpOnly: true,
     sameSite: "lax" as const,
     secure: config.cookieSecure,
     signed: true,
+    ...(maxAgeSeconds ? { maxAge: maxAgeSeconds } : {}),
   };
 }
 
@@ -119,7 +132,9 @@ function buildDeploymentView(deployment: Deployment, events: Awaited<ReturnType<
 
 export async function createApp(dependencies: ApiDependencies) {
   const app = Fastify({
-    logger: false,
+    logger: buildFastifyLoggerOptions(dependencies.config),
+    requestIdHeader: "x-request-id",
+    genReqId: () => crypto.randomUUID(),
   });
 
   await app.register(cookie, {
@@ -183,7 +198,7 @@ export async function createApp(dependencies: ApiDependencies) {
 
   app.get("/api/v1/auth/digitalocean/start", async (_request, reply) => {
     const state = crypto.randomUUID();
-    reply.setCookie(OAUTH_STATE_COOKIE, state, sessionCookieOptions(dependencies.config));
+    reply.setCookie(OAUTH_STATE_COOKIE, state, cookieOptions(dependencies.config, OAUTH_STATE_MAX_AGE_SECONDS));
     const url = dependencies.oauthClient.createAuthorizeUrl({
       state,
       redirectUri: dependencies.config.digitalOceanRedirectUri,
@@ -211,15 +226,17 @@ export async function createApp(dependencies: ApiDependencies) {
         accessToken: tokenSet.accessToken,
         refreshToken: tokenSet.refreshToken,
         accessTokenExpiresAt: tokenSet.expiresAt,
-        id: "",
-        userId: user.id,
-        createdAt: "",
-        updatedAt: "",
+        sessionTtlHours: dependencies.config.sessionTtlHours,
       }),
     );
 
-    reply.clearCookie(OAUTH_STATE_COOKIE, sessionCookieOptions(dependencies.config));
-    reply.setCookie(SESSION_COOKIE, session.id, sessionCookieOptions(dependencies.config));
+    const sessionMaxAgeSeconds = Math.max(
+      1,
+      Math.floor((new Date(session.expiresAt).getTime() - dependencies.clock.now().getTime()) / 1000),
+    );
+
+    reply.clearCookie(OAUTH_STATE_COOKIE, cookieOptions(dependencies.config));
+    reply.setCookie(SESSION_COOKIE, session.id, cookieOptions(dependencies.config, sessionMaxAgeSeconds));
     return reply.redirect(`${dependencies.config.webUrl}/?auth=success`);
   });
 
@@ -231,7 +248,7 @@ export async function createApp(dependencies: ApiDependencies) {
 
     await dependencies.oauthClient.revokeToken(session.accessToken);
     await dependencies.sessionStore.delete(session.id);
-    reply.clearCookie(SESSION_COOKIE, sessionCookieOptions(dependencies.config));
+    reply.clearCookie(SESSION_COOKIE, cookieOptions(dependencies.config));
     return reply.status(204).send();
   });
 

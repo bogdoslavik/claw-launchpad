@@ -90,4 +90,6 @@ npm test
 - OpenClaw image: `ghcr.io/openclaw/openclaw:2026.4.8`
 - Model: `openrouter/auto`
 - Persistence: PostgreSQL via Prisma when `DATABASE_URL` is set
+- API session TTL: `24h`, capped by the DigitalOcean OAuth token expiry
+- API logs: request IDs + redaction for OAuth/session/app secrets
 - Worker scheduling: `pg-boss` when `DATABASE_URL` is set, interval fallback otherwise

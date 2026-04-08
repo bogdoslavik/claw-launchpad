@@ -44,6 +44,7 @@ export interface BossLike {
 }
 
 interface LoggerLike {
+  info(message?: unknown, ...optionalParams: unknown[]): void;
   error(message?: unknown, ...optionalParams: unknown[]): void;
   warn(message?: unknown, ...optionalParams: unknown[]): void;
 }
@@ -168,6 +169,11 @@ export class PgBossWorkerScheduler implements WorkerScheduler {
       },
     );
 
+    this.logger.info("Configured deployment tracking scheduler", {
+      cron,
+      queue: TRACK_DEPLOYMENTS_QUEUE,
+    });
+
     this.started = true;
   }
 
@@ -181,6 +187,9 @@ export class PgBossWorkerScheduler implements WorkerScheduler {
       timeout: 10_000,
     });
     this.started = false;
+    this.logger.info("Stopped deployment tracking scheduler", {
+      queue: TRACK_DEPLOYMENTS_QUEUE,
+    });
   }
 }
 

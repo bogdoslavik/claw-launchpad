@@ -106,9 +106,11 @@ model ApiSession {
   accessToken          String
   refreshToken         String?
   accessTokenExpiresAt DateTime
+  expiresAt            DateTime
   createdAt            DateTime
   updatedAt            DateTime
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([expiresAt])
   @@index([userId, updatedAt])
 }

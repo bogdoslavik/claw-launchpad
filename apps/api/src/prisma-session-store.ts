@@ -1,29 +1,27 @@
+import type { ApiSession as PrismaApiSession } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
+import type { Clock } from "@launchpad/core";
 
-import type { ApiSession, SessionStore } from "./session-store.js";
+import { isApiSessionExpired, type ApiSession, type SessionStore } from "./session-store.js";
 
-function toApiSession(record: {
-  id: string;
-  userId: string;
-  accessToken: string;
-  refreshToken: string | null;
-  accessTokenExpiresAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}): ApiSession {
+function toApiSession(record: PrismaApiSession): ApiSession {
   return {
     id: record.id,
     userId: record.userId,
     accessToken: record.accessToken,
     refreshToken: record.refreshToken ?? undefined,
     accessTokenExpiresAt: record.accessTokenExpiresAt.toISOString(),
+    expiresAt: record.expiresAt.toISOString(),
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   };
 }
 
 export class PrismaSessionStore implements SessionStore {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly clock: Clock,
+  ) {}
 
   async create(session: ApiSession): Promise<ApiSession> {
     const record = await this.prisma.apiSession.create({
@@ -33,6 +31,7 @@ export class PrismaSessionStore implements SessionStore {
         accessToken: session.accessToken,
         refreshToken: session.refreshToken,
         accessTokenExpiresAt: new Date(session.accessTokenExpiresAt),
+        expiresAt: new Date(session.expiresAt),
         createdAt: new Date(session.createdAt),
         updatedAt: new Date(session.updatedAt),
       },
@@ -44,7 +43,17 @@ export class PrismaSessionStore implements SessionStore {
     const record = await this.prisma.apiSession.findUnique({
       where: { id: sessionId },
     });
-    return record ? toApiSession(record) : undefined;
+    if (!record) {
+      return undefined;
+    }
+
+    const session = toApiSession(record);
+    if (isApiSessionExpired(session, this.clock)) {
+      await this.delete(sessionId);
+      return undefined;
+    }
+
+    return session;
   }
 
   async delete(sessionId: string): Promise<void> {
@@ -53,4 +62,3 @@ export class PrismaSessionStore implements SessionStore {
     });
   }
 }
-

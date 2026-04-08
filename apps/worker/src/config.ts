@@ -4,6 +4,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().optional(),
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   WORKER_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(10_000),
   LAUNCHPAD_STORE_PATH: z
     .string()

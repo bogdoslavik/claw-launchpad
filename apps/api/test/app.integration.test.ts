@@ -13,7 +13,7 @@ describe("api integration", () => {
   beforeEach(async () => {
     digitalOcean = new FakeDigitalOceanClient();
     oauthClient = new FakeDigitalOceanOAuthClient();
-    sessionStore = new MemorySessionStore();
+    sessionStore = new MemorySessionStore(createTestClock());
     store = createTestStore();
     oauthClient.exchangedCodes.set("oauth-code", {
       accessToken: "access-token",
@@ -32,8 +32,10 @@ describe("api integration", () => {
         nodeEnv: "test",
         host: "127.0.0.1",
         port: 3001,
+        logLevel: "silent",
         cookieSecret: "test-cookie-secret-test-cookie-secret",
         cookieSecure: false,
+        sessionTtlHours: 24,
         databaseUrl: undefined,
         digitalOceanClientId: "test-client-id",
         digitalOceanClientSecret: "test-client-secret",
@@ -138,5 +140,30 @@ describe("api integration", () => {
       uiIncludedInV1: false,
     });
     expect(oauthClient.revokedTokens).toEqual(["access-token"]);
+  });
+
+  it("treats expired sessions as unauthenticated", async () => {
+    await sessionStore.create({
+      id: "expired-session",
+      userId: "missing-user",
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      accessTokenExpiresAt: "2026-04-08T12:00:00.000Z",
+      expiresAt: "2026-04-07T12:00:00.000Z",
+      createdAt: "2026-04-07T00:00:00.000Z",
+      updatedAt: "2026-04-07T00:00:00.000Z",
+    });
+
+    const session = await app.inject({
+      method: "GET",
+      url: "/api/v1/session",
+      cookies: {
+        lp_session: app.signCookie("expired-session"),
+      },
+    });
+
+    expect(session.statusCode).toBe(200);
+    expect(session.json()).toEqual({ authenticated: false });
+    await expect(sessionStore.get("expired-session")).resolves.toBeUndefined();
   });
 });

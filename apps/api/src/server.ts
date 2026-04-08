@@ -9,6 +9,7 @@ async function main() {
     host: config.host,
     port: config.port,
   });
+  app.log.info({ host: config.host, port: config.port }, "API listening");
 }
 
 main().catch((error) => {

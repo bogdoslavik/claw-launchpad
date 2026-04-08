@@ -1,9 +1,12 @@
+import type { Clock } from "@launchpad/core";
+
 export interface ApiSession {
   id: string;
   userId: string;
   accessToken: string;
   refreshToken?: string;
   accessTokenExpiresAt: string;
+  expiresAt: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -14,8 +17,14 @@ export interface SessionStore {
   delete(sessionId: string): Promise<void>;
 }
 
+function isExpired(session: ApiSession, clock: Clock): boolean {
+  return new Date(session.expiresAt).getTime() <= clock.now().getTime();
+}
+
 export class MemorySessionStore implements SessionStore {
   private readonly sessions = new Map<string, ApiSession>();
+
+  constructor(private readonly clock: Clock) {}
 
   async create(session: ApiSession): Promise<ApiSession> {
     this.sessions.set(session.id, structuredClone(session));
@@ -23,7 +32,17 @@ export class MemorySessionStore implements SessionStore {
   }
 
   async get(sessionId: string): Promise<ApiSession | undefined> {
-    return structuredClone(this.sessions.get(sessionId));
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return undefined;
+    }
+
+    if (isExpired(session, this.clock)) {
+      this.sessions.delete(sessionId);
+      return undefined;
+    }
+
+    return structuredClone(session);
   }
 
   async delete(sessionId: string): Promise<void> {
@@ -31,3 +50,4 @@ export class MemorySessionStore implements SessionStore {
   }
 }
 
+export { isExpired as isApiSessionExpired };
