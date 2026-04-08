@@ -1,0 +1,16 @@
+{
+  "name": "@launchpad/core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./digitalocean": "./src/digitalocean.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@digitalocean/dots": "^1.11.0",
+    "@microsoft/kiota-http-fetchlibrary": "^1.0.0-preview.100"
+  }
+}

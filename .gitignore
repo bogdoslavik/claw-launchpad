@@ -1,1 +1,7 @@
-/.idea/
+node_modules
+.next
+coverage
+dist
+.DS_Store
+*.tsbuildinfo
+

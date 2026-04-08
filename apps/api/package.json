@@ -1,0 +1,17 @@
+{
+  "name": "@launchpad/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.2.0",
+    "@launchpad/core": "*",
+    "fastify": "^5.8.4",
+    "zod": "^4.3.6"
+  }
+}
