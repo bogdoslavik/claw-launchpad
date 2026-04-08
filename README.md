@@ -42,7 +42,7 @@ Edit `.env` and fill only:
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-`apps/web/.env.local` is optional for local dev because the UI already defaults to `http://localhost:3001`.
+`apps/web/.env.local` is optional for local dev because the web app already proxies same-origin `/api/*` to `http://localhost:3001`.
 
 4. Start PostgreSQL locally or via Docker:
 
@@ -67,7 +67,11 @@ npm run dev:worker
 7. For a real DigitalOcean demo from your laptop, `LAUNCHPAD_PUBLIC_API_URL` in [`.env.example`](/home/dev/claw-launchpad/.env.example) must be a public HTTPS URL that forwards to your local API.
    If it stays `http://localhost:3001`, the Droplet will not be able to send bootstrap callbacks back to Launchpad.
    Optional overrides when you are not on localhost:
-   `DIGITALOCEAN_REDIRECT_URI`, `LAUNCHPAD_PUBLIC_API_URL`, `LAUNCHPAD_WEB_URL`, `NEXT_PUBLIC_LAUNCHPAD_API_URL`
+   `DIGITALOCEAN_REDIRECT_URI`, `LAUNCHPAD_PUBLIC_API_URL`, `LAUNCHPAD_WEB_URL`, `LAUNCHPAD_INTERNAL_API_URL`
+
+For the minimum demo path, expose only the web app publicly. The web app proxies `/api/*` to the backend, so your DigitalOcean OAuth app can use:
+- Home URL: `https://<your-public-host>/`
+- Callback URL: `https://<your-public-host>/api/v1/auth/digitalocean/callback`
 
 ## Docker compose
 
@@ -97,7 +101,8 @@ npm test
 ## Important defaults
 
 - DigitalOcean image: `ubuntu-24-04-x64`
-- DigitalOcean size: `s-1vcpu-1gb`
+- DigitalOcean size: `s-1vcpu-2gb`
+- Bootstrap swap: `4 GB`
 - OpenClaw image: `ghcr.io/openclaw/openclaw:2026.4.8`
 - Model: `openrouter/auto`
 - Persistence: PostgreSQL via Prisma when `DATABASE_URL` is set

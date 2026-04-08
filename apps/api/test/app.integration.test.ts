@@ -64,6 +64,7 @@ describe("api integration", () => {
     });
 
     expect(authStart.statusCode).toBe(302);
+    expect(authStart.headers["cache-control"]).toBe("no-store, max-age=0");
     const authUrl = new URL(authStart.headers.location!);
     const state = authUrl.searchParams.get("state");
     const stateCookie = authStart.cookies.find((cookie) => cookie.name === "lp_oauth_state");
@@ -80,6 +81,7 @@ describe("api integration", () => {
     });
 
     expect(authCallback.statusCode).toBe(302);
+    expect(authCallback.headers["cache-control"]).toBe("no-store, max-age=0");
     expect(authCallback.headers.location).toBe("http://localhost:3000/?auth=success");
 
     const sessionCookie = authCallback.cookies.find((cookie) => cookie.name === "lp_session");

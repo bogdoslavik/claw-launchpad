@@ -69,7 +69,7 @@ services:
         condition: service_started
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_LAUNCHPAD_API_URL: ${NEXT_PUBLIC_LAUNCHPAD_API_URL:-http://localhost:3001}
+      LAUNCHPAD_INTERNAL_API_URL: http://api:3001
     ports:
       - "3000:3000"
 

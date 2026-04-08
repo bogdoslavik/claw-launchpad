@@ -198,6 +198,8 @@ export async function createApp(dependencies: ApiDependencies) {
 
   app.get("/api/v1/auth/digitalocean/start", async (_request, reply) => {
     const state = crypto.randomUUID();
+    reply.header("Cache-Control", "no-store, max-age=0");
+    reply.header("Pragma", "no-cache");
     reply.setCookie(OAUTH_STATE_COOKIE, state, cookieOptions(dependencies.config, OAUTH_STATE_MAX_AGE_SECONDS));
     const url = dependencies.oauthClient.createAuthorizeUrl({
       state,
@@ -214,6 +216,9 @@ export async function createApp(dependencies: ApiDependencies) {
     if (!expectedState || expectedState !== query.state) {
       throw new ConflictError("OAuth state mismatch");
     }
+
+    reply.header("Cache-Control", "no-store, max-age=0");
+    reply.header("Pragma", "no-cache");
 
     const tokenSet = await dependencies.oauthClient.exchangeCode({
       code: query.code,

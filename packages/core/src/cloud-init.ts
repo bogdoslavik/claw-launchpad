@@ -105,6 +105,13 @@ mkdir -p /opt/openclaw/state /opt/openclaw/workspace
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y ca-certificates curl docker.io docker-compose-plugin
+if ! swapon --show | grep -q '^'; then
+  fallocate -l 4G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
 systemctl enable --now docker
 /opt/openclaw/report-stage.sh docker_installed
 cd /opt/openclaw
@@ -149,4 +156,3 @@ runcmd:
   - [ bash, -lc, "/opt/openclaw/bootstrap.sh" ]
 `;
 }
-

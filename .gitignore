@@ -6,4 +6,6 @@ dist
 *.tsbuildinfo
 .env
 apps/api/.env
+apps/api/.launchpad/
 apps/web/.env.local
+.launchpad/

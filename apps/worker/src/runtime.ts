@@ -3,6 +3,10 @@ import { JsonLaunchpadStore, PrismaLaunchpadStore, SystemClock } from "@launchpa
 import { DoTsDigitalOceanClient } from "@launchpad/core/digitalocean";
 
 export function buildWorkerDependencies(options: { databaseUrl?: string; storePath: string }) {
+  if (options.databaseUrl) {
+    process.env.DATABASE_URL = options.databaseUrl;
+  }
+
   const prisma = options.databaseUrl ? new PrismaClient() : undefined;
 
   return {

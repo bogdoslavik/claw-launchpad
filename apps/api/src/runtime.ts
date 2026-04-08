@@ -8,6 +8,10 @@ import { PrismaSessionStore } from "./prisma-session-store.js";
 
 export function buildApiDependencies(config: ApiConfig) {
   const clock = new SystemClock();
+  if (config.databaseUrl) {
+    process.env.DATABASE_URL = config.databaseUrl;
+  }
+
   const prisma = config.databaseUrl ? new PrismaClient() : undefined;
 
   return {

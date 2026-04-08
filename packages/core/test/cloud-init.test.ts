@@ -22,9 +22,10 @@ describe("buildCloudInit", () => {
     expect(cloudInit).toContain("\"127.0.0.1:18789:18789\"");
     expect(cloudInit).toContain("\"--bind\",");
     expect(cloudInit).toContain("\"loopback\",");
+    expect(cloudInit).toContain("fallocate -l 4G /swapfile");
+    expect(cloudInit).toContain("swapon /swapfile");
     expect(cloudInit).toContain("cloud_init_started");
     expect(cloudInit).toContain("openclaw_started");
     expect(cloudInit).not.toContain("0.0.0.0:18789");
   });
 });
-

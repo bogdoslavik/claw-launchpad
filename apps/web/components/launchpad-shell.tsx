@@ -129,14 +129,14 @@ export function LaunchpadShell({ apiBaseUrl }: LaunchpadShellProps) {
     <main className="page-shell">
       <section className="hero-panel">
         <p className="eyebrow">Control plane for OpenClaw on DigitalOcean</p>
-        <h1>Deploy the Telegram bot first. Leave the browser UI for later.</h1>
+        <h1>Agent Mama</h1>
         <p className="lede">
           V1 creates a Droplet, installs OpenClaw, configures Telegram plus OpenRouter, and tracks bootstrap
           progress. OpenClaw browser UI is explicitly out of scope for this release.
         </p>
         <div className="hero-meta">
           <span>Default model: `openrouter/auto`</span>
-          <span>Default Droplet: `s-1vcpu-1gb`</span>
+          <span>Default Droplet: `s-1vcpu-2gb`</span>
           <span>Image: `ubuntu-24-04-x64`</span>
         </div>
       </section>
