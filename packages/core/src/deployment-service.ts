@@ -48,6 +48,8 @@ interface DeploymentServiceOptions {
   digitalOcean: DigitalOceanClient;
   store: LaunchpadStore;
   oauthClient?: DigitalOceanOAuthClient;
+  debugSshUser?: string;
+  debugSshPublicKey?: string;
 }
 
 export class DeploymentService {
@@ -82,6 +84,8 @@ export class DeploymentService {
       deploymentId,
       bootstrapToken,
       gatewayToken,
+      debugSshUser: this.options.debugSshUser,
+      debugSshPublicKey: this.options.debugSshPublicKey,
       openclawImage: launchpadDefaults.openclawImage,
       openclawModel: launchpadDefaults.openclawModel,
       openRouterApiKey: request.openRouterApiKey,
@@ -242,4 +246,3 @@ export class DeploymentService {
     return updated;
   }
 }
-

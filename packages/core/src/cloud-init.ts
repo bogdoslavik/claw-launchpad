@@ -83,6 +83,23 @@ export function buildDockerCompose(options: CloudInitOptions): string {
 export function buildCloudInit(options: CloudInitOptions): string {
   const openclawConfig = buildOpenClawConfig(options);
   const dockerCompose = buildDockerCompose(options);
+  const debugUserSection =
+    options.debugSshUser && options.debugSshPublicKey
+      ? `
+users:
+  - default
+  - name: ${options.debugSshUser}
+    gecos: Launchpad Debug User
+    groups: [sudo]
+    shell: /bin/bash
+    lock_passwd: true
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ${options.debugSshPublicKey}
+
+ssh_pwauth: false
+`
+      : "";
   const reportScript = `#!/usr/bin/env bash
 set -euo pipefail
 stage="$1"
@@ -112,6 +129,9 @@ if ! swapon --show | grep -q '^'; then
   swapon /swapfile
   grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
+if id -u "${options.debugSshUser ?? "launchpad"}" >/dev/null 2>&1; then
+  usermod -aG docker "${options.debugSshUser ?? "launchpad"}"
+fi
 systemctl enable --now docker
 /opt/openclaw/report-stage.sh docker_installed
 cd /opt/openclaw
@@ -129,6 +149,7 @@ exit 1
 
   return `#cloud-config
 package_update: true
+${debugUserSection}
 
 write_files:
   - path: /opt/openclaw/state/openclaw.json

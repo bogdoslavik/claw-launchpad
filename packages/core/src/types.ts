@@ -212,6 +212,8 @@ export interface CloudInitOptions {
   gatewayToken: string;
   openclawImage: string;
   openclawModel: string;
+  debugSshUser?: string;
+  debugSshPublicKey?: string;
 }
 
 export interface LaunchpadDefaults {
@@ -223,4 +225,3 @@ export interface LaunchpadDefaults {
   openclawImage: string;
   openclawModel: string;
 }
-

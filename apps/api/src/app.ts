@@ -119,12 +119,16 @@ async function loadSession(request: any, sessionStore: SessionStore) {
   return sessionStore.get(sessionId);
 }
 
-function buildDeploymentView(deployment: Deployment, events: Awaited<ReturnType<LaunchpadStore["listDeploymentEvents"]>>) {
+function buildDeploymentView(
+  deployment: Deployment,
+  events: Awaited<ReturnType<LaunchpadStore["listDeploymentEvents"]>>,
+  sshTunnelUser: string,
+) {
   return {
     ...deployment,
     uiIncludedInV1: false,
     sshTunnelCommand: deployment.publicIpv4
-      ? `ssh -L 18789:127.0.0.1:18789 root@${deployment.publicIpv4}`
+      ? `ssh -L 18789:127.0.0.1:18789 ${sshTunnelUser}@${deployment.publicIpv4}`
       : null,
     events,
   };
@@ -149,6 +153,8 @@ export async function createApp(dependencies: ApiDependencies) {
   const deploymentService = new DeploymentService({
     callbackBaseUrl: dependencies.config.publicApiUrl,
     clock: dependencies.clock,
+    debugSshPublicKey: dependencies.config.debugSshPublicKey,
+    debugSshUser: dependencies.config.debugSshUser,
     digitalOcean: dependencies.digitalOcean,
     oauthClient: dependencies.oauthClient,
     store: dependencies.store,
@@ -266,7 +272,11 @@ export async function createApp(dependencies: ApiDependencies) {
     const deployments = await dependencies.store.listDeploymentsByUser(session.userId);
     const views = await Promise.all(
       deployments.map(async (deployment) =>
-        buildDeploymentView(deployment, await dependencies.store.listDeploymentEvents(deployment.id)),
+        buildDeploymentView(
+          deployment,
+          await dependencies.store.listDeploymentEvents(deployment.id),
+          dependencies.config.sshTunnelUser,
+        ),
       ),
     );
 
@@ -288,7 +298,7 @@ export async function createApp(dependencies: ApiDependencies) {
     }
 
     const events = await dependencies.store.listDeploymentEvents(deployment.id);
-    return buildDeploymentView(deployment, events);
+    return buildDeploymentView(deployment, events, dependencies.config.sshTunnelUser);
   });
 
   app.post("/api/v1/deployments", async (request, reply) => {
@@ -317,7 +327,7 @@ export async function createApp(dependencies: ApiDependencies) {
     });
 
     const events = await dependencies.store.listDeploymentEvents(result.deployment.id);
-    return reply.status(202).send(buildDeploymentView(result.deployment, events));
+    return reply.status(202).send(buildDeploymentView(result.deployment, events, dependencies.config.sshTunnelUser));
   });
 
   app.post("/api/v1/deployments/:id/cancel", async (request) => {
@@ -329,14 +339,14 @@ export async function createApp(dependencies: ApiDependencies) {
     const params = z.object({ id: z.string().uuid() }).parse(request.params);
     const deployment = await deploymentService.cancelDeployment(params.id, session.userId);
     const events = await dependencies.store.listDeploymentEvents(deployment.id);
-    return buildDeploymentView(deployment, events);
+    return buildDeploymentView(deployment, events, dependencies.config.sshTunnelUser);
   });
 
   app.post("/api/v1/deployments/callback", async (request) => {
     const body = callbackBodySchema.parse(request.body);
     const deployment = await deploymentService.handleCallback(body);
     const events = await dependencies.store.listDeploymentEvents(deployment.id);
-    return buildDeploymentView(deployment, events);
+    return buildDeploymentView(deployment, events, dependencies.config.sshTunnelUser);
   });
 
   return app;

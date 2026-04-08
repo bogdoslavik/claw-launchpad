@@ -14,6 +14,8 @@
 - Add optional access to the OpenClaw UI.
 - Preferred no-SSH direction: `Tailscale Serve`, while keeping the gateway loopback-only.
 - Keep `SSH tunnel` as a fallback access mode for advanced users and debugging.
+- Replace the temporary dev-only `launchpad` debug user and remove `NOPASSWD:ALL` before production hardening.
+- Replace local-machine SSH key injection with proper SSH key selection/attachment from DigitalOcean.
 - Add model selection in Launchpad instead of hardcoding `openrouter/auto`.
 - Add support for choosing a specific OpenRouter model per deployment.
 - Evaluate whether UI access should stay optional or become part of the default flow.

@@ -8,6 +8,8 @@ describe("buildCloudInit", () => {
       callbackUrl: "https://launchpad.example.com/api/v1/deployments/callback",
       deploymentId: "8ac1d3cb-ec53-4699-b1ca-09a6a6c76477",
       bootstrapToken: "bootstrap-token",
+      debugSshPublicKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITest launchpad@example.com",
+      debugSshUser: "launchpad",
       gatewayToken: "gateway-token",
       telegramBotToken: "123456:ABCDEF",
       openRouterApiKey: "sk-or-123",
@@ -24,6 +26,10 @@ describe("buildCloudInit", () => {
     expect(cloudInit).toContain("\"loopback\",");
     expect(cloudInit).toContain("fallocate -l 4G /swapfile");
     expect(cloudInit).toContain("swapon /swapfile");
+    expect(cloudInit).toContain("name: launchpad");
+    expect(cloudInit).toContain("sudo: ALL=(ALL) NOPASSWD:ALL");
+    expect(cloudInit).toContain("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITest launchpad@example.com");
+    expect(cloudInit).toContain("usermod -aG docker \"launchpad\"");
     expect(cloudInit).toContain("cloud_init_started");
     expect(cloudInit).toContain("openclaw_started");
     expect(cloudInit).not.toContain("0.0.0.0:18789");

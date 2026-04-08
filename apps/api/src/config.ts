@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -20,7 +22,25 @@ const apiDefaults = {
   sessionTtlHours: 24,
   storePath: path.resolve(process.cwd(), ".launchpad/store.json"),
   oauthScopes: ["droplet:create", "droplet:read", "regions:read", "sizes:read", "actions:read", "image:read"],
+  debugSshUser: "launchpad",
 };
+
+function loadLocalSshPublicKey() {
+  const candidates = ["id_ed25519.pub", "id_rsa.pub", "id_ecdsa.pub"].map((name) => path.join(os.homedir(), ".ssh", name));
+
+  for (const candidate of candidates) {
+    if (!fs.existsSync(candidate)) {
+      continue;
+    }
+
+    const key = fs.readFileSync(candidate, "utf8").trim();
+    if (key.length > 0) {
+      return key;
+    }
+  }
+
+  return undefined;
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -40,6 +60,7 @@ export type ApiConfig = ReturnType<typeof loadApiConfig>;
 
 export function loadApiConfig(env: NodeJS.ProcessEnv = process.env) {
   const parsed = envSchema.parse(env);
+  const debugSshPublicKey = parsed.NODE_ENV === "production" ? undefined : loadLocalSshPublicKey();
 
   return {
     nodeEnv: parsed.NODE_ENV,
@@ -57,5 +78,8 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env) {
     webUrl: parsed.LAUNCHPAD_WEB_URL,
     storePath: apiDefaults.storePath,
     oauthScopes: apiDefaults.oauthScopes,
+    debugSshUser: apiDefaults.debugSshUser,
+    debugSshPublicKey,
+    sshTunnelUser: debugSshPublicKey ? apiDefaults.debugSshUser : "root",
   };
 }
