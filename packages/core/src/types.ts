@@ -112,6 +112,7 @@ export interface CreateDeploymentRequest {
   userId: string;
   idempotencyKey: string;
   telegramBotToken: string;
+  telegramUserId?: string;
   openRouterApiKey: string;
   accessToken: string;
   refreshToken?: string;
@@ -208,6 +209,7 @@ export interface CloudInitOptions {
   deploymentId: string;
   bootstrapToken: string;
   telegramBotToken: string;
+  telegramUserId?: string;
   openRouterApiKey: string;
   gatewayToken: string;
   openclawImage: string;

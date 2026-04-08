@@ -90,6 +90,7 @@ export class DeploymentService {
       openclawModel: launchpadDefaults.openclawModel,
       openRouterApiKey: request.openRouterApiKey,
       telegramBotToken: request.telegramBotToken,
+      telegramUserId: request.telegramUserId,
     });
 
     const deployment: Deployment = {

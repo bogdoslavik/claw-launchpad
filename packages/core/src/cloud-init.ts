@@ -9,6 +9,16 @@ function indentBlock(value: string, spaces: number): string {
 }
 
 export function buildOpenClawConfig(options: CloudInitOptions): string {
+  const telegramChannelConfig = options.telegramUserId
+    ? {
+        botToken: options.telegramBotToken,
+        dmPolicy: "allowlist",
+        allowFrom: [options.telegramUserId],
+      }
+    : {
+        botToken: options.telegramBotToken,
+      };
+
   return JSON.stringify(
     {
       env: {
@@ -22,16 +32,15 @@ export function buildOpenClawConfig(options: CloudInitOptions): string {
         },
       },
       gateway: {
-        bind: "loopback",
+        mode: "local",
+        bind: "lan",
         auth: {
           mode: "token",
           token: options.gatewayToken,
         },
       },
       channels: {
-        telegram: {
-          botToken: options.telegramBotToken,
-        },
+        telegram: telegramChannelConfig,
       },
     },
     null,
@@ -73,7 +82,7 @@ export function buildDockerCompose(options: CloudInitOptions): string {
     "        \"dist/index.js\",",
     "        \"gateway\",",
     "        \"--bind\",",
-    "        \"loopback\",",
+    "        \"lan\",",
     "        \"--port\",",
     "        \"18789\"",
     "      ]",
@@ -121,7 +130,7 @@ mkdir -p /opt/openclaw/state /opt/openclaw/workspace
 /opt/openclaw/report-stage.sh cloud_init_started
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y ca-certificates curl docker.io docker-compose-plugin
+apt-get install -y ca-certificates curl docker.io docker-compose-v2
 if ! swapon --show | grep -q '^'; then
   fallocate -l 4G /swapfile
   chmod 600 /swapfile
@@ -129,6 +138,7 @@ if ! swapon --show | grep -q '^'; then
   swapon /swapfile
   grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
+chown -R 1000:1000 /opt/openclaw/state /opt/openclaw/workspace
 if id -u "${options.debugSshUser ?? "launchpad"}" >/dev/null 2>&1; then
   usermod -aG docker "${options.debugSshUser ?? "launchpad"}"
 fi

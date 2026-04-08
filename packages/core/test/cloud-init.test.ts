@@ -12,20 +12,27 @@ describe("buildCloudInit", () => {
       debugSshUser: "launchpad",
       gatewayToken: "gateway-token",
       telegramBotToken: "123456:ABCDEF",
+      telegramUserId: "6120673454",
       openRouterApiKey: "sk-or-123",
       openclawImage: "ghcr.io/openclaw/openclaw:2026.4.8",
       openclawModel: "openrouter/auto",
     });
 
     expect(cloudInit).toContain("#cloud-config");
+    expect(cloudInit).toContain("\"mode\": \"local\"");
     expect(cloudInit).toContain("\"primary\": \"openrouter/auto\"");
     expect(cloudInit).toContain("\"botToken\": \"123456:ABCDEF\"");
+    expect(cloudInit).toContain("\"dmPolicy\": \"allowlist\"");
+    expect(cloudInit).toContain("\"allowFrom\": [");
+    expect(cloudInit).toContain("\"6120673454\"");
     expect(cloudInit).toContain("\"OPENROUTER_API_KEY\": \"sk-or-123\"");
     expect(cloudInit).toContain("\"127.0.0.1:18789:18789\"");
     expect(cloudInit).toContain("\"--bind\",");
-    expect(cloudInit).toContain("\"loopback\",");
+    expect(cloudInit).toContain("\"lan\",");
+    expect(cloudInit).toContain("docker-compose-v2");
     expect(cloudInit).toContain("fallocate -l 4G /swapfile");
     expect(cloudInit).toContain("swapon /swapfile");
+    expect(cloudInit).toContain("chown -R 1000:1000 /opt/openclaw/state /opt/openclaw/workspace");
     expect(cloudInit).toContain("name: launchpad");
     expect(cloudInit).toContain("sudo: ALL=(ALL) NOPASSWD:ALL");
     expect(cloudInit).toContain("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITest launchpad@example.com");

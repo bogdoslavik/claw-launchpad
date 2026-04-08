@@ -27,6 +27,7 @@ const OAUTH_STATE_MAX_AGE_SECONDS = 10 * 60;
 
 const deploymentBodySchema = z.object({
   telegramBotToken: z.string().min(1),
+  telegramUserId: z.string().regex(/^\d+$/u, "Telegram user id must be numeric").optional(),
   openRouterApiKey: z.string().min(1),
   region: z.string().min(1).optional(),
   sizeSlug: z.string().min(1).optional(),
@@ -317,6 +318,7 @@ export async function createApp(dependencies: ApiDependencies) {
       userId: session.userId,
       idempotencyKey,
       telegramBotToken: body.telegramBotToken,
+      telegramUserId: body.telegramUserId,
       openRouterApiKey: body.openRouterApiKey,
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,

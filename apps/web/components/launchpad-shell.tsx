@@ -63,12 +63,33 @@ export function LaunchpadShell({ apiBaseUrl }: LaunchpadShellProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [telegramBotToken, setTelegramBotToken] = useState("");
+  const [telegramUserId, setTelegramUserId] = useState("");
   const [openRouterApiKey, setOpenRouterApiKey] = useState("");
   const deferredDeployments = useDeferredValue(deployments);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedTelegramUserId = window.localStorage.getItem("launchpad.telegramUserId");
+      if (savedTelegramUserId) {
+        setTelegramUserId(savedTelegramUserId);
+      }
+    }
+
     void refresh();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (telegramUserId) {
+      window.localStorage.setItem("launchpad.telegramUserId", telegramUserId);
+      return;
+    }
+
+    window.localStorage.removeItem("launchpad.telegramUserId");
+  }, [telegramUserId]);
 
   async function refresh() {
     setLoading(true);
@@ -107,6 +128,7 @@ export function LaunchpadShell({ apiBaseUrl }: LaunchpadShellProps) {
         method: "POST",
         body: JSON.stringify({
           telegramBotToken,
+          telegramUserId: telegramUserId || undefined,
           openRouterApiKey,
         }),
       });
@@ -176,6 +198,17 @@ export function LaunchpadShell({ apiBaseUrl }: LaunchpadShellProps) {
               />
             </label>
             <label>
+              <span>Telegram user id</span>
+              <input
+                autoComplete="off"
+                disabled={!session.authenticated || submitting}
+                inputMode="numeric"
+                onChange={(event) => setTelegramUserId(event.target.value.replace(/\D/g, ""))}
+                placeholder="6120673454"
+                value={telegramUserId}
+              />
+            </label>
+            <label>
               <span>OpenRouter API key</span>
               <input
                 autoComplete="off"
@@ -192,6 +225,10 @@ export function LaunchpadShell({ apiBaseUrl }: LaunchpadShellProps) {
           <p className="muted">
             Launchpad does not expose the OpenClaw browser UI in V1. Success means the Telegram bot is up and the
             Droplet finished bootstrap.
+          </p>
+          <p className="muted">
+            If you set your numeric Telegram user id, Launchpad pre-approves DM access and skips the pairing code
+            flow.
           </p>
         </article>
       </section>
